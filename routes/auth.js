@@ -5,7 +5,7 @@ const debug = require('debug')('passport-learning:login');
 /* GET users listing. */
 router.get('/', function (req, res, next) {
   debug(req.cookies);
-  res.send('respond with a resource');
+  res.end('login');
 });
 
 module.exports = router;
