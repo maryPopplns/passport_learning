@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const debug = require('debug')('passport-learning:users');
+const debug = require('debug')('passport-learning:login');
 
 /* GET users listing. */
 router.get('/', function (req, res, next) {
