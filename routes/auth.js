@@ -5,15 +5,18 @@ const passport = require('passport');
 const mongoose = require('mongoose');
 const debug = require('debug')('passport-learning:login');
 const GoogleStrategy = require('passport-google-oauth20').Strategy;
+const Schema = mongoose.Schema;
 
-// const User = mongoose.model(
-//   'User',
-//   new Schema({
-//     username: { type: String, required: true },
-//     password: { type: String, required: true },
-//   })
-// );
+const User = mongoose.model(
+  'User',
+  new Schema({
+    name: { type: String, required: true },
+    email: { type: String, required: true },
+    sub: { type: String, required: true },
+  })
+);
 
+// [ GOOGLE AUTH SETUP ]
 passport.use(
   new GoogleStrategy(
     {
@@ -22,20 +25,33 @@ passport.use(
       callbackURL: 'http://localhost:3000/login/success',
     },
     function (accessToken, refreshToken, profile, cb) {
-      const { sub, email } = profile._json;
-      console.log(profile._json);
+      const { sub, email, name } = profile._json;
 
-      return;
-      // TODO see if we have an existing user within our DB
-      // TODO
-
-      // User.findOrCreate({ googleId: profile.id }, function (err, user) {
-      //   return cb(err, user);
-      // });
+      const query = { email };
+      const update = { sub, email, name };
+      const options = { upsert: true, new: true };
+      // Find the document
+      User.findOneAndUpdate(query, update, options, function (error, result) {
+        if (error) {
+          cb(error);
+        } else {
+          cb(null, result);
+        }
+      });
     }
   )
 );
-/* GET users listing. */
+
+// [ SERIALIZE USERS ]
+passport.serializeUser(function (user, done) {
+  done(null, user.id);
+});
+passport.deserializeUser(function (id, done) {
+  User.findById(id, function (err, user) {
+    done(err, user);
+  });
+});
+
 loginRouter.get(
   '/',
   passport.authenticate('google', { scope: ['profile', 'email'] })
@@ -45,11 +61,20 @@ loginRouter.get(
   '/success',
   passport.authenticate('google', {
     failureRedirect: '/login',
+    successRedirect: '/login/access',
     failureMessage: true,
-  }),
-  function (req, res) {
-    res.redirect('/');
-  }
+  })
+  // function (req, res) {
+  //   req.is
+  // }
 );
+
+loginRouter.get('/access', function (req, res) {
+  if (req.isAuthenticated()) {
+    res.end('the end');
+  } else {
+    res.end('not the end');
+  }
+});
 
 module.exports = loginRouter;
