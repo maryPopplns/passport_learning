@@ -7,14 +7,20 @@ const logger = require('morgan');
 const cookieParser = require('cookie-parser');
 const passport = require('passport');
 const session = require('express-session');
+const MongoStore = require('connect-mongo');
 
 const indexRouter = require('./routes/index');
 const loginRouter = require('./routes/auth');
 
 const mongoDb = process.env.MONGO_STRING_LOCAL;
 mongoose.connect(mongoDb, { useUnifiedTopology: true, useNewUrlParser: true });
-const db = mongoose.connection;
-db.on('error', console.error.bind(console, 'mongo connection error'));
+const database = mongoose.connection;
+database.on('error', console.error.bind(console, 'mongo connection error'));
+
+// [ SESSION STORAGE ]
+const sessionStore = MongoStore.create({
+  mongoUrl: process.env.MONGO_STRING_LOCAL,
+});
 
 const app = express();
 
@@ -22,7 +28,14 @@ const app = express();
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'pug');
 
-app.use(session({ secret: 'cats', resave: false, saveUninitialized: true }));
+app.use(
+  session({
+    secret: process.env.SECRET,
+    resave: false,
+    saveUninitialized: true,
+    store: sessionStore,
+  })
+);
 app.use(logger('dev'));
 app.use(express.json());
 app.use(passport.initialize());

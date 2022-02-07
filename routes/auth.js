@@ -64,9 +64,6 @@ loginRouter.get(
     successRedirect: '/login/access',
     failureMessage: true,
   })
-  // function (req, res) {
-  //   req.is
-  // }
 );
 
 loginRouter.get('/access', function (req, res) {
